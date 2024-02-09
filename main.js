@@ -127,11 +127,11 @@ const CUBE_SHIFT = 1;
 const DELAY = 100;
 
 /**
- * The starting position of a new falling cube.
+ * The starting Y position of a new falling cube.
  * The top of the screen corresponds to a Y level of 14.
  * @global
  */
-const INITIAL_CUBE_POS = new Vector3(0, 14, 0);
+const INITIAL_CUBE_Y_POS = 14;
 
 /**
  * The minimum and maximum X coordinates of a cube so that
@@ -139,8 +139,8 @@ const INITIAL_CUBE_POS = new Vector3(0, 14, 0);
  * @global
  */
 const BOUNDARIES = {
-  left: 5,
-  right: 15
+  left: -7,
+  right: 7
 };
 
 /**
@@ -186,7 +186,7 @@ function _ready() {
   camera.position.y = 6;
 
   // Generates an empty grid (null values):
-  const number_of_layers = INITIAL_CUBE_POS.y;
+  const number_of_layers = INITIAL_CUBE_Y_POS;
   const single_layer_size = BOUNDARIES.right - BOUNDARIES.left;
   for (let i = 0; i < number_of_layers; i++) {
     grid[i] = Array(single_layer_size).fill(null);
@@ -231,13 +231,14 @@ function create_ground() {
  */
 function spawn_cube() {
   // Create a new cube
-  current_cube = new Cube(COLORS[rand_int(0, COLORS.length)], INITIAL_CUBE_POS);
+  const new_cube_position = new Vector3(rand_int(BOUNDARIES.left, BOUNDARIES.right), INITIAL_CUBE_Y_POS, 0);
+  current_cube = new Cube(COLORS[rand_int(0, COLORS.length)], new_cube_position);
   scene.add(current_cube.render());
   // Make it go down
   const interval = setInterval(() => {
     if (current_cube.y() === 0 || should_stop_current_cube()) {
       clearInterval(interval);
-      if (current_cube.y() === INITIAL_CUBE_POS.y) {
+      if (current_cube.y() === INITIAL_CUBE_Y_POS) {
         alert("You lost");
       } else {
         save_cube_to_grid();
@@ -275,22 +276,12 @@ function move_cube_horizontally(direction) {
 }
 
 /**
- * Gets the X-coordinate of the current cube within the grid,
- * deduced from its current X-position.
- * @returns {number} The X-coordinate of the cube within the grid.
- */
-function x_to_boundaries() {
-  return current_cube.x()+BOUNDARIES.left-1;
-}
-
-/**
  * Checks if given X-coordinates are within the boundaries of the grid.
  * @param {number} x The X-coordinate
  * @returns {bool}
  */
 function is_in_boundaries(x) {
-  const single_layer_size_per_side = (BOUNDARIES.right - BOUNDARIES.left) / 2;
-  return x + single_layer_size_per_side >= 0 && x <= single_layer_size_per_side;
+  return x >= BOUNDARIES.left && x <= BOUNDARIES.right;
 }
 
 /**
@@ -298,14 +289,14 @@ function is_in_boundaries(x) {
  * @returns {bool} Whether the cube should stop falling.
  */
 function should_stop_current_cube() {
-  return grid[current_cube.y() - 1][x_to_boundaries()] != null;
+  return grid[current_cube.y() - 1][current_cube.x()] != null;
 }
 
 /**
  * Saves a deep copy of the current cube into the grid.
  */
 function save_cube_to_grid() {
-  grid[current_cube.y()][x_to_boundaries()] = current_cube.copy();
+  grid[current_cube.y()][current_cube.x()] = current_cube.copy();
 }
 
 /**
